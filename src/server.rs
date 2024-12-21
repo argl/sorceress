@@ -327,6 +327,8 @@ impl Server {
                                     offset += 1;
                                 }
                             }
+                        } else {
+                            println!("unhandled message: {:?}", message);
                         }
                     }
                     OscPacket::Bundle(bundle) => {
@@ -355,7 +357,7 @@ impl Server {
     ///
     /// Returns an error if the any commands cannot be sent to the server.
     pub fn reset(&self) -> Result<()> {
-        self.send(GroupFreeAll::new(vec![0]))?;
+        self.send(GroupFreeAll::new(0))?;
         self.send(ClearSched::new())?;
         self.sync()?;
         Ok(())
@@ -466,6 +468,18 @@ impl Control {
             id: id.into(),
             value: value.into(),
         }
+    }
+
+    pub fn id(&self) -> &ControlID {
+        &self.id
+    }
+
+    pub fn set(&mut self, value: impl Into<ControlValue>) {
+        self.value = value.into();
+    }
+
+    pub fn get(&self) -> &ControlValue {
+        &self.value
     }
 }
 
@@ -883,10 +897,28 @@ impl AsyncCommand for BufferAllocateRead {
     fn reply_matcher(&self) -> ReplyMatcher {
         let command_buffer_number = self.buffer_number;
         ReplyMatcher::new(move |reply| {
-            matches!(reply,
-                Reply::BufferAllocateReadDone { buffer_number }
-                if *buffer_number == command_buffer_number
-            )
+            match reply {
+                Reply::BufferAllocateReadDone { buffer_number } => {
+                    *buffer_number == command_buffer_number
+                }
+                Reply::Fail {
+                    command,
+                    error,
+                    other,
+                } if other.is_some() => {
+                    if other.unwrap() == command_buffer_number {
+                        println!("fail: {} err: {:?}", command, error);
+                        true
+                    } else {
+                        false
+                    }
+                }
+                _ => false,
+            }
+            // matches!(reply,
+            //     Reply::BufferAllocateReadDone { buffer_number }
+            //     if *buffer_number == command_buffer_number
+            // )
         })
     }
 }
@@ -1092,7 +1124,7 @@ impl AsyncCommand for BufferQuery {
 /// to a background thread to complete so as not to steal CPU time from the audio synthesis thread.
 /// All asynchronous commands send a reply to the client when they complete. `Reply` enumerates all
 /// of the possible asynchronous replies.
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub enum Reply {
     /// Sent in reponse to asynchronous commands where no additional information is required.
@@ -1169,6 +1201,7 @@ pub enum Reply {
         error: String,
         // TODO: this command can take an optional 3rd "other" type argument. We should figure out
         // what possible values can be given and handle them.
+        other: Option<i32>,
     },
 }
 
@@ -1279,6 +1312,20 @@ impl Reply {
                 Some(Reply::Fail {
                     command: args.string("command")?,
                     error: args.string("error")?,
+                    other: None,
+                })
+            });
+        router
+            .addr("/fail")
+            .capture("command")
+            .capture("error")
+            .capture("other")
+            .handle(|args| {
+                println!("fail command routed: {:?}", args);
+                Some(Reply::Fail {
+                    command: args.string("command")?,
+                    error: args.string("error")?,
+                    other: Some(args.int("other")?),
                 })
             });
 
@@ -1637,17 +1684,98 @@ impl Command for SynthNew {
 //
 
 // GroupNew
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct GroupNew {
+    group_id: i32,
+    add_action: AddAction,
+    add_target_id: i32,
+}
+
+impl GroupNew {
+    pub fn new(group_id: i32) -> GroupNew {
+        GroupNew::default().group_id(group_id)
+    }
+}
+
+impl GroupNew {
+    pub fn add_action(mut self, add_action: AddAction) -> GroupNew {
+        self.add_action = add_action;
+        self
+    }
+
+    pub fn group_id(mut self, group_id: i32) -> GroupNew {
+        self.group_id = group_id;
+        self
+    }
+
+    pub fn add_target_id(mut self, add_target_id: i32) -> GroupNew {
+        self.add_target_id = add_target_id;
+        self
+    }
+}
+
+impl Command for GroupNew {
+    #[doc(hidden)]
+    fn into_packet(self) -> Packet {
+        Message::addr("/g_new")
+            .arg(self.group_id)
+            .arg(self.add_action as i32)
+            .arg(self.add_target_id)
+            .into_packet()
+    }
+}
+
 // GroupNewParallel
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct GroupNewParallel {
+    group_id: i32,
+    add_action: AddAction,
+    add_target_id: i32,
+}
+
+impl GroupNewParallel {
+    pub fn new(group_id: i32) -> GroupNewParallel {
+        GroupNewParallel::default().group_id(group_id)
+    }
+}
+
+impl GroupNewParallel {
+    pub fn add_action(mut self, add_action: AddAction) -> GroupNewParallel {
+        self.add_action = add_action;
+        self
+    }
+
+    pub fn group_id(mut self, group_id: i32) -> GroupNewParallel {
+        self.group_id = group_id;
+        self
+    }
+
+    pub fn add_target_id(mut self, add_target_id: i32) -> GroupNewParallel {
+        self.add_target_id = add_target_id;
+        self
+    }
+}
+
+impl Command for GroupNewParallel {
+    #[doc(hidden)]
+    fn into_packet(self) -> Packet {
+        Message::addr("/p_new")
+            .arg(self.group_id)
+            .arg(self.add_action as i32)
+            .arg(self.add_target_id)
+            .into_packet()
+    }
+}
 // GroupHead
 // GroupTail
 
 /// Deletes all nodes in a group.
 ///
-/// Frees all nodes in a group, releasing their IDs. Multiple groups may be specified in a single
+/// free my children, but this node is still playing
 /// command.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct GroupFreeAll {
-    group_ids: Vec<i32>,
+    group_id: i32,
 }
 
 impl GroupFreeAll {
@@ -1655,24 +1783,44 @@ impl GroupFreeAll {
     ///
     /// # Arguments
     ///
-    /// * `group_ids` - The IDs of the groups to delete.
-    pub fn new(group_ids: impl IntoIterator<Item = i32>) -> GroupFreeAll {
-        GroupFreeAll {
-            group_ids: group_ids.into_iter().collect(),
-        }
+    /// * `group_id` - The ID of the groups to delete.
+    pub fn new(group_id: i32) -> GroupFreeAll {
+        GroupFreeAll { group_id }
     }
 }
 
 impl Command for GroupFreeAll {
     #[doc(hidden)]
     fn into_packet(self) -> Packet {
-        Message::addr("/g_freeAll")
-            .args(self.group_ids)
-            .into_packet()
+        Message::addr("/g_freeAll").arg(self.group_id).into_packet()
     }
 }
 
 // GroupDeepFree
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct GroupDeepFree {
+    group_id: i32,
+}
+
+impl GroupDeepFree {
+    /// Creates a new `GroupDeepFree` command.
+    ///
+    /// # Arguments
+    ///
+    /// * `group_id` - The ID of the groups to delete.
+    pub fn new(group_id: i32) -> GroupDeepFree {
+        GroupDeepFree { group_id }
+    }
+}
+
+impl Command for GroupDeepFree {
+    #[doc(hidden)]
+    fn into_packet(self) -> Packet {
+        Message::addr("/g_deepFree")
+            .arg(self.group_id)
+            .into_packet()
+    }
+}
 // GroupDumpTree
 // GroupQueryTree
 
@@ -1981,6 +2129,15 @@ mod tests {
             Some(Reply::Fail {
                 command: "/cmdName".to_owned(),
                 error: "oops".to_owned(),
+                other: None,
+            })
+        );
+        assert_eq!(
+            reply("/fail", vec![arg("/cmdName"), arg("oops"), arg(123)]),
+            Some(Reply::Fail {
+                command: "/cmdName".to_owned(),
+                error: "oops".to_owned(),
+                other: Some(123),
             })
         );
     }
