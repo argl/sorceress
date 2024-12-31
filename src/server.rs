@@ -165,6 +165,8 @@ mod private;
 use private::{Message, Packet, ReplyMatcher};
 use rosc::{decoder::decode, encoder::encode, OscBundle, OscError, OscMessage, OscPacket, OscType};
 use std::convert::TryInto;
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::{
     error, fmt, io,
     net::{ToSocketAddrs, UdpSocket},
@@ -611,6 +613,17 @@ impl ControlValue {
             ControlValue::Float(x) => x.into(),
             ControlValue::ControlBus(x) => format!("c{}", x).into(),
             ControlValue::AudioBus(x) => format!("a{}", x).into(),
+        }
+    }
+}
+
+impl Display for ControlValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            ControlValue::Int(x) => write!(f, "{}", x),
+            ControlValue::Float(x) => write!(f, "{:.3}", x),
+            ControlValue::ControlBus(x) => write!(f, "cb-{}", x),
+            ControlValue::AudioBus(x) => write!(f, "ab-{}", x),
         }
     }
 }
