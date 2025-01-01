@@ -178,6 +178,8 @@ use std::{
     time::SystemTime,
 };
 
+use crate::ugen::In;
+
 // TODO: graceful server shutdown and change documentation on `Server::subscribe` to say that the
 // sender can be dropped and receiving code should act accordingly.
 
@@ -592,6 +594,27 @@ pub enum ControlValue {
 
     /// Specifies the number of an audio bus.
     AudioBus(i32),
+}
+
+impl Into<i32> for ControlValue {
+    fn into(self) -> i32 {
+        match self {
+            ControlValue::Int(x) => x,
+            ControlValue::Float(x) => x.floor() as i32,
+            ControlValue::ControlBus(x) => x,
+            ControlValue::AudioBus(x) => x,
+        }
+    }
+}
+impl Into<f32> for ControlValue {
+    fn into(self) -> f32 {
+        match self {
+            ControlValue::Int(x) => x as f32,
+            ControlValue::Float(x) => x,
+            ControlValue::ControlBus(x) => x as f32,
+            ControlValue::AudioBus(x) => x as f32,
+        }
+    }
 }
 
 impl From<i32> for ControlValue {
