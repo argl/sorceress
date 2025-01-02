@@ -178,8 +178,6 @@ use std::{
     time::SystemTime,
 };
 
-use crate::ugen::In;
-
 // TODO: graceful server shutdown and change documentation on `Server::subscribe` to say that the
 // sender can be dropped and receiving code should act accordingly.
 
@@ -1711,6 +1709,35 @@ impl Command for SynthNew {
                     .into_iter()
                     .flat_map(ControlRange::into_osc_args),
             )
+            .into_packet()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct NodeRun {
+    node_id: i32,
+    run: bool,
+}
+
+impl NodeRun {
+    /// Creates a new `NodeRun` command.
+    ///
+    /// # Arguments
+    ///
+    /// * `synthdef_name` - The name of the synth definition to use.
+    /// * `add_target_id` - The ID used by [`add_action`](NodeRun::add_action). See [`AddAction`]
+    ///   for more details.
+    pub fn new(node_id: i32, run: bool) -> NodeRun {
+        NodeRun { node_id, run }
+    }
+}
+
+impl Command for NodeRun {
+    #[doc(hidden)]
+    fn into_packet(self) -> Packet {
+        Message::addr("/n_run")
+            .arg(self.node_id)
+            .arg(self.run as i32)
             .into_packet()
     }
 }
