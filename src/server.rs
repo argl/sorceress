@@ -349,7 +349,7 @@ impl Server {
             .recv(buffer)
             .map_err(|err| Error(ErrorInner::Recv(err)))?;
         let packet = decode(&buffer[..len]).map_err(|err| Error(ErrorInner::OscDecode(err)))?;
-        log::debug!("recv: {:?}", packet);
+        // log::debug!("recv: {:?}", packet);
         Ok(packet)
     }
 
@@ -1226,6 +1226,60 @@ pub enum Reply {
         buffers: Vec<BufferInfo>,
     },
 
+    NodeGo {
+        node_id: i32,
+        parent_id: i32,
+        prev_id: i32,
+        next_id: i32,
+        is_group: bool,
+    },
+
+    NodeEnd {
+        node_id: i32,
+        parent_id: i32,
+        prev_id: i32,
+        next_id: i32,
+        is_group: bool,
+    },
+
+    NodeOff {
+        node_id: i32,
+        parent_id: i32,
+        prev_id: i32,
+        next_id: i32,
+        is_group: bool,
+    },
+
+    NodeOn {
+        node_id: i32,
+        parent_id: i32,
+        prev_id: i32,
+        next_id: i32,
+        is_group: bool,
+    },
+
+    NodeMove {
+        node_id: i32,
+        parent_id: i32,
+        prev_id: i32,
+        next_id: i32,
+        is_group: bool,
+    },
+
+    NodeInfo {
+        node_id: i32,
+        parent_id: i32,
+        prev_id: i32,
+        next_id: i32,
+        is_group: bool,
+    },
+
+    Trig {
+        node_id: i32,
+        trigger_id: i32,
+        value: f32,
+    },
+
     /// An error occured.
     #[non_exhaustive]
     Fail {
@@ -1241,6 +1295,7 @@ pub enum Reply {
 
 impl Reply {
     fn parse(message: &OscMessage) -> Option<Reply> {
+        // println!("parsing message: {:?}", message);
         let mut router = osc_router::Router::default();
         router.addr("/done").handle(|_| Some(Reply::Done));
         router
@@ -1360,6 +1415,121 @@ impl Reply {
                     command: args.string("command")?,
                     error: args.string("error")?,
                     other: Some(args.int("other")?),
+                })
+            });
+
+        router
+            .addr("/n_go")
+            .capture("node_id")
+            .capture("parent_id")
+            .capture("prev_id")
+            .capture("next_id")
+            .capture("is_group")
+            .handle(|args| {
+                Some(Reply::NodeGo {
+                    node_id: args.int("node_id")?,
+                    parent_id: args.int("parent_id")?,
+                    prev_id: args.int("prev_id")?,
+                    next_id: args.int("next_id")?,
+                    is_group: args.int("is_group")? != 0,
+                })
+            });
+
+        router
+            .addr("/n_end")
+            .capture("node_id")
+            .capture("parent_id")
+            .capture("prev_id")
+            .capture("next_id")
+            .capture("is_group")
+            .handle(|args| {
+                Some(Reply::NodeEnd {
+                    node_id: args.int("node_id")?,
+                    parent_id: args.int("parent_id")?,
+                    prev_id: args.int("prev_id")?,
+                    next_id: args.int("next_id")?,
+                    is_group: args.int("is_group")? != 0,
+                })
+            });
+
+        router
+            .addr("/n_off")
+            .capture("node_id")
+            .capture("parent_id")
+            .capture("prev_id")
+            .capture("next_id")
+            .capture("is_group")
+            .handle(|args| {
+                Some(Reply::NodeOff {
+                    node_id: args.int("node_id")?,
+                    parent_id: args.int("parent_id")?,
+                    prev_id: args.int("prev_id")?,
+                    next_id: args.int("next_id")?,
+                    is_group: args.int("is_group")? != 0,
+                })
+            });
+
+        router
+            .addr("/n_on")
+            .capture("node_id")
+            .capture("parent_id")
+            .capture("prev_id")
+            .capture("next_id")
+            .capture("is_group")
+            .handle(|args| {
+                Some(Reply::NodeOn {
+                    node_id: args.int("node_id")?,
+                    parent_id: args.int("parent_id")?,
+                    prev_id: args.int("prev_id")?,
+                    next_id: args.int("next_id")?,
+                    is_group: args.int("is_group")? != 0,
+                })
+            });
+
+        router
+            .addr("/n_move")
+            .capture("node_id")
+            .capture("parent_id")
+            .capture("prev_id")
+            .capture("next_id")
+            .capture("is_group")
+            .handle(|args| {
+                Some(Reply::NodeMove {
+                    node_id: args.int("node_id")?,
+                    parent_id: args.int("parent_id")?,
+                    prev_id: args.int("prev_id")?,
+                    next_id: args.int("next_id")?,
+                    is_group: args.int("is_group")? != 0,
+                })
+            });
+
+        router
+            .addr("/n_info")
+            .capture("node_id")
+            .capture("parent_id")
+            .capture("prev_id")
+            .capture("next_id")
+            .capture("is_group")
+            .handle(|args| {
+                Some(Reply::NodeInfo {
+                    node_id: args.int("node_id")?,
+                    parent_id: args.int("parent_id")?,
+                    prev_id: args.int("prev_id")?,
+                    next_id: args.int("next_id")?,
+                    is_group: args.int("is_group")? != 0,
+                })
+            });
+
+        router
+            .addr("/tr")
+            .capture("node_id")
+            .capture("trigger_id")
+            .capture("value")
+            .handle(|args| {
+                Some(Reply::Trig {
+                    node_id: args.int("node_id")?,
+                    trigger_id: args.int("trigger_id")?,
+                    value: args.float("value")?,
                 })
             });
 

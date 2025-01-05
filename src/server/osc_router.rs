@@ -147,6 +147,13 @@ impl MatchedArgs {
         }
     }
 
+    pub fn float(&mut self, name: &'static str) -> Option<f32> {
+        match self.args.remove(name) {
+            Some(OscType::Float(x)) => Some(x),
+            _ => None,
+        }
+    }
+
     pub fn string(&mut self, name: &'static str) -> Option<String> {
         match self.args.remove(name) {
             Some(OscType::String(x)) => Some(x),
