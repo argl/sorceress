@@ -738,6 +738,32 @@ impl AsyncCommand for Quit {
     }
 }
 
+/// Represents a DumpOSC command.
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct DumpOSC {
+    enabled: bool,
+}
+
+impl DumpOSC {
+    /// Creates a new instance of `DumpOSC`.
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` - A boolean flag to enable or disable dumping OSC messages.
+    pub fn new(enabled: bool) -> DumpOSC {
+        DumpOSC { enabled }
+    }
+}
+
+impl Command for DumpOSC {
+    #[doc(hidden)]
+    fn into_packet(self) -> Packet {
+        Message::addr("/dumpOSC")
+            .arg(self.enabled as i32)
+            .into_packet()
+    }
+}
+
 /// Register to receive notifications from server.
 ///
 /// **Asynchronous**. Replies to the sender with a [`Reply::NotifyDone`] message containing a
