@@ -162,7 +162,7 @@
 mod osc_router;
 mod private;
 
-use private::{Message, Packet, ReplyMatcher};
+use private::{Message, ReplyMatcher};
 use rosc::{decoder::decode, encoder::encode, OscBundle, OscError, OscMessage, OscPacket, OscType};
 use std::convert::TryInto;
 use std::fmt::Display;
@@ -426,6 +426,24 @@ impl error::Error for Error {
             ErrorInner::OscDecode(e) => Some(e),
             ErrorInner::OscEncode(e) => Some(e),
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct Packet(pub OscPacket);
+
+impl Packet {
+    pub fn addr(&self) -> Option<&str> {
+        match self.0 {
+            OscPacket::Bundle(_) => None,
+            OscPacket::Message(ref message) => Some(&message.addr),
+        }
+    }
+}
+
+impl Command for Packet {
+    fn into_packet(self) -> Packet {
+        self
     }
 }
 
@@ -1266,6 +1284,8 @@ pub enum Reply {
         prev_id: i32,
         next_id: i32,
         is_group: bool,
+        head_node: Option<i32>,
+        tail_node: Option<i32>,
     },
 
     NodeOff {
@@ -1304,6 +1324,12 @@ pub enum Reply {
         node_id: i32,
         trigger_id: i32,
         value: f32,
+    },
+
+    Diskin {
+        node_id: i32,
+        send_id: i32,
+        frame: f32,
     },
 
     /// An error occured.
@@ -1468,6 +1494,8 @@ impl Reply {
             .capture("prev_id")
             .capture("next_id")
             .capture("is_group")
+            .capture_optional("head_node")
+            .capture_optional("tail_node")
             .handle(|args| {
                 Some(Reply::NodeEnd {
                     node_id: args.int("node_id")?,
@@ -1475,6 +1503,8 @@ impl Reply {
                     prev_id: args.int("prev_id")?,
                     next_id: args.int("next_id")?,
                     is_group: args.int("is_group")? != 0,
+                    head_node: args.int("head_node"),
+                    tail_node: args.int("tail_node"),
                 })
             });
 
@@ -1556,6 +1586,19 @@ impl Reply {
                     node_id: args.int("node_id")?,
                     trigger_id: args.int("trigger_id")?,
                     value: args.float("value")?,
+                })
+            });
+
+        router
+            .addr("/diskin")
+            .capture("node_id")
+            .capture("send_id")
+            .capture("frame")
+            .handle(|args| {
+                Some(Reply::Diskin {
+                    node_id: args.int("node_id")?,
+                    send_id: args.int("send_id")?,
+                    frame: args.float("frame")?,
                 })
             });
 

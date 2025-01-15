@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::{Command, Reply};
+use super::{Command, Packet, Reply};
 use rosc::{OscMessage, OscPacket, OscType};
 
 pub struct ReplyMatcher {
@@ -31,24 +31,6 @@ impl ReplyMatcher {
 
     pub fn matches(&self, reply: &Reply) -> bool {
         (self.f)(reply)
-    }
-}
-
-#[derive(Debug)]
-pub struct Packet(pub OscPacket);
-
-impl Packet {
-    pub fn addr(&self) -> Option<&str> {
-        match self.0 {
-            OscPacket::Bundle(_) => None,
-            OscPacket::Message(ref message) => Some(&message.addr),
-        }
-    }
-}
-
-impl Command for Packet {
-    fn into_packet(self) -> Packet {
-        self
     }
 }
 
