@@ -164,8 +164,6 @@ mod private;
 
 use private::{Message, ReplyMatcher};
 use rosc::{decoder::decode, encoder::encode, OscBundle, OscError, OscMessage, OscPacket, OscType};
-use serde::Deserialize;
-use serde::Serialize;
 use std::convert::TryInto;
 use std::fmt::Display;
 use std::fmt::Formatter;
@@ -620,9 +618,9 @@ pub enum ControlValue {
     CueNum(i32),
 }
 
-impl Into<i32> for ControlValue {
-    fn into(self) -> i32 {
-        match self {
+impl From<ControlValue> for i32 {
+    fn from(val: ControlValue) -> Self {
+        match val {
             ControlValue::Int(x) => x,
             ControlValue::Float(x) => x.floor() as i32,
             ControlValue::ControlBus(x) => x,
@@ -632,9 +630,9 @@ impl Into<i32> for ControlValue {
         }
     }
 }
-impl Into<f32> for ControlValue {
-    fn into(self) -> f32 {
-        match self {
+impl From<ControlValue> for f32 {
+    fn from(val: ControlValue) -> Self {
+        match val {
             ControlValue::Int(x) => x as f32,
             ControlValue::Float(x) => x,
             ControlValue::ControlBus(x) => x as f32,
@@ -1182,7 +1180,7 @@ impl BufferQuery {
     /// # Arguments
     ///
     /// * `buffer_numbers` - The numbers of the buffers to query. Information on all of the
-    /// specified buffers will be returned in a single [`Reply::BufferInfo`] message.
+    ///   specified buffers will be returned in a single [`Reply::BufferInfo`] message.
     pub fn new(buffer_numbers: impl IntoIterator<Item = i32>) -> BufferQuery {
         BufferQuery {
             buffer_numbers: buffer_numbers.into_iter().collect(),
