@@ -164,6 +164,8 @@ mod private;
 
 use private::{Message, ReplyMatcher};
 use rosc::{decoder::decode, encoder::encode, OscBundle, OscError, OscMessage, OscPacket, OscType};
+use serde::Deserialize;
+use serde::Serialize;
 use std::convert::TryInto;
 use std::fmt::Display;
 use std::fmt::Formatter;
@@ -610,6 +612,12 @@ pub enum ControlValue {
 
     /// Specifies the number of an audio bus.
     AudioBus(i32),
+
+    /// Bufnum
+    BufNum(i32),
+
+    /// CueNum
+    CueNum(i32),
 }
 
 impl Into<i32> for ControlValue {
@@ -619,6 +627,8 @@ impl Into<i32> for ControlValue {
             ControlValue::Float(x) => x.floor() as i32,
             ControlValue::ControlBus(x) => x,
             ControlValue::AudioBus(x) => x,
+            ControlValue::BufNum(x) => x,
+            ControlValue::CueNum(x) => x,
         }
     }
 }
@@ -629,6 +639,8 @@ impl Into<f32> for ControlValue {
             ControlValue::Float(x) => x,
             ControlValue::ControlBus(x) => x as f32,
             ControlValue::AudioBus(x) => x as f32,
+            ControlValue::BufNum(x) => x as f32,
+            ControlValue::CueNum(x) => x as f32,
         }
     }
 }
@@ -652,6 +664,8 @@ impl ControlValue {
             ControlValue::Float(x) => x.into(),
             ControlValue::ControlBus(x) => format!("c{}", x).into(),
             ControlValue::AudioBus(x) => format!("a{}", x).into(),
+            ControlValue::BufNum(x) => x.into(),
+            ControlValue::CueNum(x) => x.into(),
         }
     }
 }
@@ -663,6 +677,8 @@ impl Display for ControlValue {
             ControlValue::Float(x) => write!(f, "{:.3}", x),
             ControlValue::ControlBus(x) => write!(f, "cb-{}", x),
             ControlValue::AudioBus(x) => write!(f, "ab-{}", x),
+            ControlValue::BufNum(x) => write!(f, "bufnum-{}", x),
+            ControlValue::CueNum(x) => write!(f, "cuenum-{}", x),
         }
     }
 }
