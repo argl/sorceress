@@ -613,9 +613,6 @@ pub enum ControlValue {
 
     /// Bufnum
     BufNum(i32),
-
-    /// CueNum
-    CueNum(i32),
 }
 
 impl From<ControlValue> for i32 {
@@ -626,7 +623,6 @@ impl From<ControlValue> for i32 {
             ControlValue::ControlBus(x) => x,
             ControlValue::AudioBus(x) => x,
             ControlValue::BufNum(x) => x,
-            ControlValue::CueNum(x) => x,
         }
     }
 }
@@ -638,7 +634,6 @@ impl From<ControlValue> for f32 {
             ControlValue::ControlBus(x) => x as f32,
             ControlValue::AudioBus(x) => x as f32,
             ControlValue::BufNum(x) => x as f32,
-            ControlValue::CueNum(x) => x as f32,
         }
     }
 }
@@ -663,7 +658,6 @@ impl ControlValue {
             ControlValue::ControlBus(x) => format!("c{}", x).into(),
             ControlValue::AudioBus(x) => format!("a{}", x).into(),
             ControlValue::BufNum(x) => x.into(),
-            ControlValue::CueNum(x) => x.into(),
         }
     }
 }
@@ -676,7 +670,6 @@ impl Display for ControlValue {
             ControlValue::ControlBus(x) => write!(f, "cb-{}", x),
             ControlValue::AudioBus(x) => write!(f, "ab-{}", x),
             ControlValue::BufNum(x) => write!(f, "bufnum-{}", x),
-            ControlValue::CueNum(x) => write!(f, "cuenum-{}", x),
         }
     }
 }
