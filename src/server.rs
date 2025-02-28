@@ -1339,6 +1339,13 @@ pub enum Reply {
         frame: f32,
     },
 
+    Level {
+        node_id: i32,
+        send_id: i32,
+        peak: f32,
+        rms: f32,
+    },
+
     /// An error occured.
     #[non_exhaustive]
     Fail {
@@ -1606,6 +1613,21 @@ impl Reply {
                     node_id: args.int("node_id")?,
                     send_id: args.int("send_id")?,
                     frame: args.float("frame")?,
+                })
+            });
+
+        router
+            .addr("/level")
+            .capture("node_id")
+            .capture("send_id")
+            .capture("peak")
+            .capture("rms")
+            .handle(|args| {
+                Some(Reply::Level {
+                    node_id: args.int("node_id")?,
+                    send_id: args.int("send_id")?,
+                    peak: args.float("peak")?,
+                    rms: args.float("rms")?,
                 })
             });
 
