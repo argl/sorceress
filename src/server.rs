@@ -1339,11 +1339,31 @@ pub enum Reply {
         frame: f32,
     },
 
-    Level {
+    // Level {
+    //     node_id: i32,
+    //     send_id: i32,
+    //     peak: f32,
+    //     rms: f32,
+    // },
+    Metering {
         node_id: i32,
         send_id: i32,
-        peak: f32,
-        rms: f32,
+        peak_ch1: f32,
+        rms_ch1: f32,
+        peak_ch2: f32,
+        rms_ch2: f32,
+        peak_ch3: f32,
+        rms_ch3: f32,
+        peak_ch4: f32,
+        rms_ch4: f32,
+        peak_ch5: f32,
+        rms_ch5: f32,
+        peak_ch6: f32,
+        rms_ch6: f32,
+        peak_l: f32,
+        rms_l: f32,
+        peak_r: f32,
+        rms_r: f32,
     },
 
     /// An error occured.
@@ -1617,17 +1637,45 @@ impl Reply {
             });
 
         router
-            .addr("/level")
+            .addr("/metering")
             .capture("node_id")
             .capture("send_id")
-            .capture("peak")
-            .capture("rms")
+            .capture("peak_ch1")
+            .capture("rms_ch1")
+            .capture("peak_ch2")
+            .capture("rms_ch2")
+            .capture("peak_ch3")
+            .capture("rms_ch3")
+            .capture("peak_ch4")
+            .capture("rms_ch4")
+            .capture("peak_ch5")
+            .capture("rms_ch5")
+            .capture("peak_ch6")
+            .capture("rms_ch6")
+            .capture("peak_l")
+            .capture("rms_l")
+            .capture("peak_r")
+            .capture("rms_r")
             .handle(|args| {
-                Some(Reply::Level {
+                Some(Reply::Metering {
                     node_id: args.int("node_id")?,
                     send_id: args.int("send_id")?,
-                    peak: args.float("peak")?,
-                    rms: args.float("rms")?,
+                    peak_ch1: args.float("peak_ch1")?,
+                    rms_ch1: args.float("rms_ch1")?,
+                    peak_ch2: args.float("peak_ch2")?,
+                    rms_ch2: args.float("rms_ch2")?,
+                    peak_ch3: args.float("peak_ch3")?,
+                    rms_ch3: args.float("rms_ch3")?,
+                    peak_ch4: args.float("peak_ch4")?,
+                    rms_ch4: args.float("rms_ch4")?,
+                    peak_ch5: args.float("peak_ch5")?,
+                    rms_ch5: args.float("rms_ch5")?,
+                    peak_ch6: args.float("peak_ch6")?,
+                    rms_ch6: args.float("rms_ch6")?,
+                    peak_l: args.float("peak_l")?,
+                    rms_l: args.float("rms_l")?,
+                    peak_r: args.float("peak_r")?,
+                    rms_r: args.float("rms_r")?,
                 })
             });
 
