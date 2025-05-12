@@ -349,7 +349,7 @@ impl Server {
             .recv(buffer)
             .map_err(|err| Error(ErrorInner::Recv(err)))?;
         let packet = decode(&buffer[..len]).map_err(|err| Error(ErrorInner::OscDecode(err)))?;
-        // log::debug!("recv: {:?}", packet);
+        // log::info!("recv: {:?}", packet);
         Ok(packet)
     }
 
