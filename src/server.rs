@@ -2200,6 +2200,37 @@ impl Command for GroupDeepFree {
             .into_packet()
     }
 }
+
+// GroupAddNodeToHead
+// GroupDeepFree
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct GroupAddNodeToHead {
+    group_id: i32,
+    node_id: i32,
+}
+
+impl GroupAddNodeToHead {
+    /// Creates a new `GroupAddNodeToHead` command.
+    ///
+    /// # Arguments
+    ///
+    /// * `group_id` - The ID of the groups to delete.
+    /// * `node_id` - The ID of the node to add.
+    pub fn new(group_id: i32, node_id: i32) -> GroupAddNodeToHead {
+        GroupAddNodeToHead { group_id, node_id }
+    }
+}
+
+impl Command for GroupAddNodeToHead {
+    #[doc(hidden)]
+    fn into_packet(self) -> Packet {
+        Message::addr("/g_head")
+            .arg(self.group_id)
+            .arg(self.node_id)
+            .into_packet()
+    }
+}
+
 // GroupDumpTree
 // GroupQueryTree
 
